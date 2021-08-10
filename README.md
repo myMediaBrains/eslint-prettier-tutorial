@@ -1,4 +1,4 @@
-# ESLint Prettier README
+# ESLint README
 
 가독성 높은 코드를 작성하기 위한 모듈이다.
 
@@ -77,10 +77,110 @@
 }
 ```
 
-|      |      |      |
-| ---- | ---- | ---- |
-|      |      |      |
-|      |      |      |
+| cascading and hierarchy | 구분                        | 설명                                                         |
+| ----------------------- | --------------------------- | ------------------------------------------------------------ |
+| cascading               | precedences                 | 동일 디렉토리에 있는 .eslintrc 파일이 우선권을 갖는다.       |
+|                         |                             | 그 다음, ESLint 는 root: true 또는 root 디렉토리에 도달할 때까지 디렉토리 구조에서 .eslintrc 파일들을 merge 한다. |
+|                         |                             | ESLint는 root: true 가 발견되면, 더 이상 .eslintrc.* 를 찾지 않고 멈춘다. |
+|                         | inline configuration        | 1) /\*eslint-disable*/ and /\*eslint-enable\*/               |
+|                         |                             | 2) /\*global\*/                                              |
+|                         |                             | 3) /\*eslint*/                                               |
+|                         |                             | 4) /\*eslint-env*/                                           |
+|                         | command line options        | 1) \--global                                                 |
+|                         |                             | 2) \--rule                                                   |
+|                         |                             | 3) \--env                                                    |
+|                         |                             | 4) \-c, \--config                                            |
+|                         | project-level configuration | 1) 동일 디렉토리에 있는 .eslintrc.* 또는 package.json        |
+|                         |                             | 2) root 디렉토리 또는 “root”: true 가 발견될 때까지 ancestor 에 있는 .eslintrc.* 및 package.json 을 searching 한다. |
+
+
+
+```json
+{
+  "root": true
+}
+```
+
+| extends                           | 구분                                                   | 설명                                                         |
+| --------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| extends                           | definition                                             | 일단 어떤 configuration file 이 entended 되면, 또 다른 configuration 파일의 모든 특성을 상속받고, 모든 options를 수정할 수 있다. |
+|                                   | 3가지 configuration                                    | (base config) extended 된 configuration 이다.                |
+|                                   |                                                        | (derived config) base config 를 extend하는 configuration 이다. |
+|                                   |                                                        | (resulting actual config) base config 로 derived config 을 merge 한 결과이다. |
+|                                   | extends property value                                 | (a string) a config file 에 대한 a path 또는 a shareable config 의 name으로 a configuration 을 지정하는 문자열 |
+|                                   |                                                        | (an array of strings) 각각의 추가적인 configuration 은 preceding configuration 을 extends 하는 문자열 배열 |
+| rules 속성으로 extend             | enable additional rules                                |                                                              |
+|                                   | rule 을 change                                         | base config: “eqeqeq”: [“error”, “allow-null”]               |
+|                                   |                                                        | derived config: “eqeqeq”: “warn”                             |
+|                                   |                                                        | resulting actual config: “eqeqeq”: [“warn”, “allow-null”]    |
+|                                   | base config 로 부터 rules 에 대하여 options를 override | base config: “quotes”: [“error”, “single”, “avoid-escape”]   |
+|                                   |                                                        | derived config: “quotes”: [“error”, “single”]                |
+|                                   |                                                        | resulting actual config: “quotes”: [“error”, “single”]       |
+| shareable config package 사용하기 | definition                                             | [a shareable configuration]()은 a configuration object 를 extend 하는 an npm package 이다. |
+|                                   |                                                        | extends 속성 값은 패키지 이름의 eslint-config- 접두어를 생략할 수 있다. |
+|                                   |                                                        | eslint \--init  명령으로  a configuraton을 만들 수 있기 때문에, 인기 있는 style guide를 extend 할 수 있다(예: eslint-config-standard) |
+
+```json
+{
+  "extends": "stanadrd",
+  "rules": {
+    "comma-dangel": [
+      - error,
+      - always
+    ],
+    "no-empty": "warn"
+  }
+}
+```
+
+| extends | 구분                 | 설명                                                         |
+| ------- | -------------------- | ------------------------------------------------------------ |
+| extends | “eslint:recommended” | 일반적인 문제들을 레포트하는 core rules 의 a subset 을 enable 한다. |
+|         |                      | 이러한  rules 들은 rules page 에서 체크마크 ✓로 분간된다.    |
+
+```js
+module.exports = {
+    "extends": "eslint:recommended",
+    "rules": {
+        // enable additional rules
+        "indent": ["error", 4],
+        "linebreak-style": ["error", "unix"],
+        "quotes": ["error", "double"],
+        "semi": ["error", "always"],
+
+        // override configuration set by extending "eslint:recommended"
+        "no-empty": "warn",
+        "no-cond-assign": ["error", "always"],
+
+        // disable rules from base configurations
+         "for-direction": "off",
+    }
+}
+```
+
+| extends | 구분            | 설명                                                         |
+| ------- | --------------- | ------------------------------------------------------------ |
+| extends | definition      | a plugin 은 ESLint로 여러 extensions 를 add 할 수 있는 an npm package 이다. |
+|         |                 | a plugin 은 여러 함수들을 수행할 수 있고,  새로운 rules 를 add하고 shareable config 를 export 할 수 있다. |
+|         |                 | plugin 속성 값은 패키지 이름의 eslint-plugin- 접두어를 생략할 수 있다. |
+|         | extends 속성 값 | (plugin)                                                     |
+|         |                 | (패키지 이름) 예: react (eslint-plugin-react 와 동일)        |
+|         |                 | (config name) 예: recommended                                |
+
+```json
+{
+    "plugins": [
+        "react"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended"
+    ],
+    "rules": {
+       "react/no-set-state": "off"
+    }
+}
+```
 
 ## ESLint Language Options : env, globals, parserOptions
 
